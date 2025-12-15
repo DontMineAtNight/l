@@ -1539,11 +1539,9 @@ function loadSettings() {
             efficientModeCheckbox.checked = JSON.parse(efficientMode);
             // Update UI visibility
             const isChecked = efficientModeCheckbox.checked;
-            if (specialModeContainer) {
-                specialModeContainer.style.display = isChecked ? 'block' : 'none';
-            }
-            if (crystalDelayContainer) {
-                crystalDelayContainer.style.display = isChecked ? 'block' : 'none';
+            const efficientModeOptions = document.getElementById('efficientModeOptions');
+            if (efficientModeOptions) {
+                efficientModeOptions.style.display = isChecked ? 'block' : 'none';
             }
         }
     }
@@ -1595,11 +1593,9 @@ if (loopMode) loopMode.addEventListener('change', saveSettings);
 if (efficientModeCheckbox) {
     efficientModeCheckbox.addEventListener('change', () => {
         const isChecked = efficientModeCheckbox.checked;
-        if (specialModeContainer) {
-            specialModeContainer.style.display = isChecked ? 'block' : 'none';
-        }
-        if (crystalDelayContainer) {
-            crystalDelayContainer.style.display = isChecked ? 'block' : 'none';
+        const efficientModeOptions = document.getElementById('efficientModeOptions');
+        if (efficientModeOptions) {
+            efficientModeOptions.style.display = isChecked ? 'block' : 'none';
         }
         saveSettings();
     });
