@@ -10,117 +10,367 @@
     <link rel="stylesheet" href="app://assets/css/plugin-styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        /* Base Styles */
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
-
-        /* Card Styles */
-        .stats-card {
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
-            border: 1px solid rgba(99, 102, 241, 0.3);
+        :root {
+            --accent-green: #22c55e;
+            --accent-red: #ef4444;
+            --accent-blue: #3b82f6;
+            --accent-yellow: #eab308;
+            --accent-purple: #a855f7;
+            --bg-card: rgba(30, 30, 35, 0.9);
+            --bg-card-hover: rgba(40, 40, 48, 0.95);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-accent: rgba(139, 92, 246, 0.4);
         }
 
-        .setting-card {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
+        /* Animations */
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes glow { 0%, 100% { box-shadow: 0 0 5px var(--accent-purple); } 50% { box-shadow: 0 0 20px var(--accent-purple); } }
+
+        /* Layout */
+        .main-grid {
+            display: grid;
+            gap: 1rem;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 1rem;
+            transition: all 0.2s ease;
+        }
+        .card:hover { background: var(--bg-card-hover); }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+        .card-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #e5e5e5;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .card-title i { font-size: 0.75rem; opacity: 0.7; }
+
+        /* Control Panel */
+        .control-panel {
+            background: linear-gradient(135deg, rgba(30, 30, 35, 0.95), rgba(25, 25, 30, 0.95));
+            border: 1px solid var(--border-accent);
+            padding: 1.25rem;
+        }
+        .control-buttons {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 0.625rem 1.25rem;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 0.875rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: white;
+        }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-start { background: linear-gradient(135deg, #22c55e, #16a34a); }
+        .btn-start:hover:not(:disabled) { background: linear-gradient(135deg, #16a34a, #15803d); transform: translateY(-1px); }
+        .btn-stop { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        .btn-stop:hover:not(:disabled) { background: linear-gradient(135deg, #dc2626, #b91c1c); transform: translateY(-1px); }
+        .btn-reset { background: linear-gradient(135deg, #6366f1, #4f46e5); }
+        .btn-reset:hover:not(:disabled) { background: linear-gradient(135deg, #4f46e5, #4338ca); transform: translateY(-1px); }
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border-subtle);
+        }
+        .btn-secondary:hover { background: rgba(255, 255, 255, 0.12); }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.75rem;
+        }
+        .stat-item {
+            text-align: center;
+            padding: 0.75rem 0.5rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+        }
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+        .stat-value.success { color: var(--accent-green); }
+        .stat-value.failed { color: var(--accent-red); }
+        .stat-value.skipped { color: var(--accent-yellow); }
+        .stat-value.total { color: var(--accent-blue); }
+        .stat-label {
+            font-size: 0.7rem;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 0.25rem;
+        }
+
+        /* Status Section */
+        .status-section {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 0.75rem;
+        }
+        .status-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #6b7280;
+        }
+        .status-dot.running { background: var(--accent-green); animation: pulse 1.5s infinite; }
+        .status-dot.error { background: var(--accent-red); }
+        .status-dot.warning { background: var(--accent-yellow); }
+        .status-message {
+            font-size: 0.8rem;
+            color: #d1d5db;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+            margin-top: 0.5rem;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            margin-top: 0.75rem;
+        }
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            margin-bottom: 0.375rem;
+            color: #9ca3af;
+        }
+        .progress-track {
+            height: 6px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-purple), var(--accent-blue));
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        /* Collapsible Sections */
+        .collapse-trigger {
+            cursor: pointer;
+            user-select: none;
+            transition: opacity 0.2s;
+        }
+        .collapse-trigger:hover { opacity: 0.8; }
+        .collapse-chevron {
+            transition: transform 0.2s ease;
+            font-size: 0.7rem;
+        }
+        .collapse-chevron.collapsed { transform: rotate(-90deg); }
+        .collapsible-content {
+            overflow: hidden;
+            max-height: 2000px;
+            opacity: 1;
+            transition: all 0.3s ease;
+        }
+        .collapsible-content.collapsed {
+            max-height: 0 !important;
+            opacity: 0;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+        }
+
+        /* Settings Grid */
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+        .setting-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            color: #d1d5db;
+        }
+        .setting-item input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--accent-purple);
+        }
+        .setting-item select,
+        .setting-item input[type="number"] {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-subtle);
+            border-radius: 4px;
+            padding: 0.25rem 0.5rem;
+            color: #e5e5e5;
+            font-size: 0.75rem;
+            min-width: 80px;
+        }
+
+        /* Filter Section */
+        .filter-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+        }
+        .filter-field label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #d1d5db;
+            margin-bottom: 0.375rem;
+        }
+        .filter-field .hint {
+            font-size: 0.65rem;
+            color: #6b7280;
+            font-weight: 400;
+        }
+        .filter-field textarea {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            padding: 0.5rem;
+            color: #e5e5e5;
+            font-size: 0.75rem;
+            font-family: 'SF Mono', monospace;
+            resize: vertical;
+            min-height: 60px;
+        }
+        .filter-status {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 6px;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.75rem;
+            color: #9ca3af;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .filter-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 0.75rem;
+        }
+        .filter-buttons .btn {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.75rem;
+        }
+
+        /* Item Log */
+        .item-log-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+        }
+        .log-actions {
+            display: flex;
+            gap: 0.375rem;
+        }
+        .log-actions .btn {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.7rem;
+        }
+        .search-box {
+            position: relative;
+            margin-bottom: 0.5rem;
+        }
+        .search-box input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            padding: 0.5rem 0.5rem 0.5rem 2rem;
+            color: #e5e5e5;
+            font-size: 0.8rem;
+        }
+        .search-box i {
+            position: absolute;
+            left: 0.625rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6b7280;
+            font-size: 0.75rem;
+        }
+        .item-log {
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            padding: 0.5rem;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .item-log.collapsed { max-height: 120px; }
+        .item-log-empty {
+            text-align: center;
+            color: #6b7280;
+            font-size: 0.8rem;
+            padding: 1rem;
         }
 
         /* Modal */
         .modal-overlay {
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(5px);
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
         }
-
         .modal-content {
-            background: linear-gradient(135deg, rgba(30, 30, 30, 0.95), rgba(50, 50, 50, 0.95));
-            border: 1px solid rgba(99, 102, 241, 0.3);
+            background: linear-gradient(135deg, rgba(30, 30, 35, 0.98), rgba(40, 40, 48, 0.98));
+            border: 1px solid var(--border-accent);
+            border-radius: 16px;
             backdrop-filter: blur(20px);
         }
 
-        /* Animations & Transitions */
-        .progress-bar, #itemLog, .collapsible-content {
-            transition: all 0.3s ease-in-out;
-        }
-
-        .pulse-animation { animation: pulse 2s infinite; }
-
-        /* Collapsible */
-        #itemLog.collapsed { max-height: 180px; overflow-y: auto; }
-
-        .collapsible-content {
-            overflow: hidden;
-            max-height: 5000px;
-            opacity: 1;
-        }
-
-        .collapsible-content.collapsed {
-            max-height: 0 !important;
-            opacity: 0;
-            padding: 0 !important;
-            margin-bottom: 0 !important;
-        }
-
-        .collapse-toggle {
-            cursor: pointer;
-            user-select: none;
-        }
-
-        .collapse-toggle:hover { opacity: 0.8; }
-
-        /* Button Styles */
-        .control-buttons-container > button,
-        #startButton, #stopButton, #resetStatsButton {
-            padding: 8px 16px !important;
-            border-radius: 8px !important;
-            font-weight: 500 !important;
-            transition: all 0.2s ease !important;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
-            border: none !important;
-            color: white !important;
-            cursor: pointer !important;
-        }
-
-        #startButton { background: linear-gradient(to right, #10b981, #059669) !important; }
-        #startButton:hover { background: linear-gradient(to right, #059669, #047857) !important; }
-
-        #stopButton { background: linear-gradient(to right, #ef4444, #dc2626) !important; }
-        #stopButton:hover { background: linear-gradient(to right, #dc2626, #b91c1c) !important; }
-
-        #resetStatsButton { background: linear-gradient(to right, #3b82f6, #2563eb) !important; }
-        #resetStatsButton:hover { background: linear-gradient(to right, #2563eb, #1d4ed8) !important; }
-
-        #saveWhitelistsButton, #clearWhitelistsButton, #openClothingJson, #openDenItemsJson {
-            background: #4b5563 !important;
-        }
-        #saveWhitelistsButton:hover, #clearWhitelistsButton:hover,
-        #openClothingJson:hover, #openDenItemsJson:hover {
-            background: #374151 !important;
-        }
-
-        /* Layout */
-        .stats-container, .control-buttons-container {
-            display: flex !important;
-            justify-content: center !important;
-            align-items: center !important;
-        }
-
-        .stats-container {
-            gap: 80px !important;
-        }
-
-        .stats-container > div {
-            text-align: center !important;
-        }
-
-        .control-buttons-container {
-            flex-direction: row !important;
-            gap: 60px !important;
-        }
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.2); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.25); }
     </style>
 </head>
 <body class="bg-primary-bg text-text-primary h-screen flex flex-col overflow-hidden">
 
-    <!-- Standardized Draggable Header -->
+    <!-- Draggable Header -->
     <div class="jam-plugin-header">
         <span class="jam-plugin-title">TFD Automation</span>
         <div class="jam-plugin-controls">
@@ -135,395 +385,253 @@
 
     <!-- Educational Modal -->
     <div id="educationalModal" class="modal-overlay fixed inset-0 z-50 flex items-start justify-center p-4 overflow-y-auto hidden">
-        <div class="modal-content rounded-lg w-full max-w-[600px] max-h-[90vh] min-h-[400px] my-4 overflow-hidden flex flex-col">
-            <div class="p-6 flex-shrink-0">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-xl font-bold text-purple-400">
+        <div class="modal-content w-full max-w-[550px] max-h-[85vh] my-4 overflow-hidden flex flex-col">
+            <div class="p-5 flex-shrink-0">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-lg font-bold text-purple-400">
                         <i class="fas fa-graduation-cap mr-2"></i>TFD Automation Guide
                     </h2>
-                    <button id="closeModal" class="text-gray-400 hover:text-white transition-colors">
-                        <i class="fas fa-times text-xl"></i>
+                    <button id="closeModal" class="text-gray-400 hover:text-white transition-colors p-1">
+                        <i class="fas fa-times"></i>
                     </button>
                 </div>
             </div>
-            
-            <div class="px-6 flex-1 overflow-y-auto">
-                <div class="space-y-4 text-sm">
-                    <div class="bg-blue-900/30 border border-blue-500/50 rounded-lg p-4">
-                        <h3 class="font-semibold text-blue-300 mb-2">
+            <div class="px-5 pb-5 flex-1 overflow-y-auto">
+                <div class="space-y-3 text-sm">
+                    <div class="bg-blue-900/30 border border-blue-500/40 rounded-lg p-3">
+                        <h3 class="font-semibold text-blue-300 mb-2 text-sm">
                             <i class="fas fa-info-circle mr-2"></i>How It Works
                         </h3>
-                        <ul class="space-y-1 text-blue-200">
-                            <li>• Items go straight to your inventory (you won't see them appear)</li>
+                        <ul class="space-y-1 text-blue-200 text-xs">
+                            <li>• Items go straight to your inventory</li>
                             <li>• Start in your den for best results</li>
-                            <li>• Choose how long to wait before collecting rewards</li>
-                            <li>• Automatically recycles items you don't want</li>
+                            <li>• Use filters to auto-recycle unwanted items</li>
                         </ul>
                     </div>
-
-                    <div class="bg-green-900/30 border border-green-500/50 rounded-lg p-4">
-                        <h3 class="font-semibold text-green-300 mb-2">
-                            <i class="fas fa-check-circle mr-2"></i>Best Practices
-                        </h3>
-                        <ul class="space-y-1 text-green-200">
-                            <li>• Stay in your den while it runs</li>
-                            <li>• Don't switch rooms during automation</li>
-                            <li>• Check your inventory when done to see your items</li>
-                            <li>• Use loop mode to run multiple times</li>
-                        </ul>
-                    </div>
-
-                    <div class="bg-purple-900/30 border border-purple-500/50 rounded-lg p-4">
-                        <h3 class="font-semibold text-purple-300 mb-2">
-                            <i class="fas fa-magic mr-2"></i>Efficient Mode (🚀)
-                        </h3>
-                        <ul class="space-y-1 text-purple-200">
-                            <li>• Finds crystals faster and smarter</li>
-                            <li>• Skips items you don't want before collecting</li>
-                            <li>• Special Mode makes it 8x faster</li>
-                        </ul>
-                    </div>
-
-                    <div class="bg-yellow-900/30 border border-yellow-500/50 rounded-lg p-4">
-                        <h3 class="font-semibold text-yellow-300 mb-2">
-                            <i class="fas fa-filter mr-2"></i>Item Filtering System
-                        </h3>
-                        <ul class="space-y-1 text-yellow-200">
-                            <li>• Add item IDs you want to keep</li>
-                            <li>• Items you don't want get recycled automatically</li>
-                            <li>• You'll hear a sound when good items are found</li>
-                            <li>• Use the "Find IDs" buttons to see what items are available</li>
-                        </ul>
-                    </div>
-
-                    <div class="bg-red-900/30 border border-red-500/50 rounded-lg p-4">
-                        <h3 class="font-semibold text-red-300 mb-2">
+                    <div class="bg-yellow-900/30 border border-yellow-500/40 rounded-lg p-3">
+                        <h3 class="font-semibold text-yellow-300 mb-2 text-sm">
                             <i class="fas fa-exclamation-triangle mr-2"></i>Important Notes
                         </h3>
-                        <ul class="space-y-1 text-red-200">
-                            <li>• Wait time is calculated automatically</li>
-                            <li>• Failed runs will retry automatically</li>
-                            <li>• Your stats are saved between sessions</li>
-                            <li>• Stops if you lose connection</li>
+                        <ul class="space-y-1 text-yellow-200 text-xs">
+                            <li>• Always be in a room before starting</li>
+                            <li>• Don't interact during automation</li>
+                            <li>• Skipped runs don't collect rewards</li>
                         </ul>
                     </div>
-
-                    <div class="bg-gray-900/30 border border-gray-500/50 rounded-lg p-4">
-                        <h3 class="font-semibold text-gray-300 mb-2">
-                            <i class="fas fa-cogs mr-2"></i>Settings Overview
-                        </h3>
-                        <ul class="space-y-1 text-gray-200">
-                            <li>• Max Retries: How many times to retry if it fails</li>
-                            <li>• Loop Mode: Run once or many times</li>
-                            <li>• Sound alerts: Get notified when good items are found</li>
-                            <li>• Efficient Mode: Makes crystal collection faster and smarter</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
-            <div class="p-6 flex-shrink-0 border-t border-gray-600">
-                <div class="flex justify-center">
-                    <button id="startAutomationFromModal" class="px-6 py-3 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-lg hover:from-purple-600 hover:to-blue-600 hover:shadow-xl hover:scale-105 transition-all duration-200 font-medium shadow-lg">
-                        <i class="fas fa-check mr-2"></i>Got It!
+                    <button id="startAutomationFromModal" class="w-full btn btn-start justify-center mt-3">
+                        <i class="fas fa-check"></i> Got it!
                     </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Main Content Area (this will be hidden/shown on minimize) -->
-    <div class="jam-plugin-content flex-1 overflow-y-auto">
-        <div class="container mx-auto max-w-4xl p-4">
-            <!-- Header -->
-            <div class="text-center mb-6">
-                <h1 class="text-2xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-                    <i class="fas fa-map-marked-alt mr-2"></i>The Forgotten Desert
-                </h1>
-                <p class="text-text-secondary mb-2">
-                    Automated completion of TFD quest
-                </p>
-                <p class="text-xs mb-3" style="color: #f87171 !important;">
-                    Efficient Mode algorithm by <a href="https://github.com/Secretmimi" target="_blank" class="font-medium" style="color: #f87171 !important; text-decoration: none;" onmouseover="this.style.color='#fca5a5'" onmouseout="this.style.color='#f87171'">NoSmile</a>
-                </p>
-                <button id="infoButton" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-all duration-200 font-medium shadow-lg border-2 border-green-400">
-                    <i class="fas fa-book mr-2"></i>Guide
-                </button>
+    <!-- Main Content -->
+    <div class="jam-plugin-content p-3 overflow-y-auto flex-1">
+        <div class="main-grid">
+            
+            <!-- Control Panel -->
+            <div class="card control-panel">
+                <div class="control-buttons">
+                    <button id="startButton" class="btn btn-start">
+                        <i class="fas fa-play"></i> Start
+                    </button>
+                    <button id="stopButton" class="btn btn-stop" disabled>
+                        <i class="fas fa-stop"></i> Stop
+                    </button>
+                    <button id="resetStatsButton" class="btn btn-reset">
+                        <i class="fas fa-undo"></i> Reset
+                    </button>
+                    <button id="infoButton" class="btn btn-secondary">
+                        <i class="fas fa-question-circle"></i>
+                    </button>
+                </div>
             </div>
 
-            <!-- Settings Panel -->
-            <div class="setting-card rounded-lg p-4 mb-6">
-                <h2 class="text-lg font-semibold mb-4 flex items-center justify-between collapse-toggle" id="settingsToggle">
-                    <span class="flex items-center">
-                        <i class="fas fa-cogs mr-2 text-blue-400"></i>Settings
+            <!-- Stats & Status Combined -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title"><i class="fas fa-chart-bar"></i> Statistics</span>
+                    <span id="statusIcon" class="status-indicator">
+                        <span class="status-dot"></span>
+                        <span>Idle</span>
                     </span>
-                    <i class="fas fa-chevron-down text-gray-400 transition-transform" id="settingsChevron"></i>
-                </h2>
-                <div class="collapsible-content" id="settingsContent">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="space-y-2">
-                        <label class="flex items-center space-x-2">
-                            <input type="checkbox" id="soundNotificationCheckbox" checked class="form-checkbox h-4 w-4 text-blue-600 rounded">
-                            <span class="text-sm">Sound alerts for valuable items</span>
-                        </label>
-                        <label class="flex items-center space-x-2">
-                            <input type="checkbox" id="connectionFailureSoundCheckbox" checked class="form-checkbox h-4 w-4 text-blue-600 rounded">
-                            <span class="text-sm">Sound on connection failure</span>
-                        </label>
-                        <label class="flex items-center space-x-2">
-                            <input type="checkbox" id="dontLogRecycledCheckbox" class="form-checkbox h-4 w-4 text-blue-600 rounded">
-                            <span class="text-sm">Don't log recycled items</span>
-                        </label>
-                        <label class="flex items-center space-x-2">
-                            <input type="checkbox" id="autoRetryCheckbox" checked class="form-checkbox h-4 w-4 text-blue-600 rounded">
-                            <span class="text-sm">Auto-retry failed runs</span>
-                        </label>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-value success" id="successCount">0</div>
+                        <div class="stat-label">Success</div>
                     </div>
-                    <div class="space-y-4">
-                        <div>
-                            <label for="targetAccount" class="block text-sm font-medium text-text-secondary mb-1">Target Account:</label>
-                            <select id="targetAccount" class="w-full rounded-md bg-secondary-bg border-transparent focus:border-primary-accent focus:ring focus:ring-primary-accent focus:ring-opacity-50 text-text-primary text-sm">
+                    <div class="stat-item">
+                        <div class="stat-value failed" id="failureCount">0</div>
+                        <div class="stat-label">Failed</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value skipped" id="skippedCount">0</div>
+                        <div class="stat-label">Skipped</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value total" id="totalRuns">0</div>
+                        <div class="stat-label">Total</div>
+                    </div>
+                </div>
+
+                <div class="status-section mt-3">
+                    <p id="statusMessage" class="status-message">Ready to start TFD automation</p>
+                    <div class="progress-container">
+                        <div class="progress-header">
+                            <span>Progress</span>
+                            <span id="progressText">0%</span>
+                        </div>
+                        <div class="progress-track">
+                            <div id="progressBar" class="progress-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings -->
+            <div class="card">
+                <div class="card-header collapse-trigger" id="settingsToggle">
+                    <span class="card-title"><i class="fas fa-cog"></i> Settings</span>
+                    <i class="fas fa-chevron-down collapse-chevron" id="settingsChevron"></i>
+                </div>
+                <div class="collapsible-content" id="settingsContent">
+                    <div class="settings-grid">
+                        <label class="setting-item">
+                            <input type="checkbox" id="autoRetryCheckbox" checked>
+                            <span>Auto-retry on failure</span>
+                        </label>
+                        <label class="setting-item">
+                            <input type="checkbox" id="soundNotificationCheckbox">
+                            <span>Sound notifications</span>
+                        </label>
+                        <label class="setting-item">
+                            <input type="checkbox" id="connectionFailureSoundCheckbox">
+                            <span>Connection alerts</span>
+                        </label>
+                        <label class="setting-item">
+                            <input type="checkbox" id="dontLogRecycledCheckbox">
+                            <span>Hide recycled items</span>
+                        </label>
+                        <label class="setting-item">
+                            <input type="checkbox" id="efficientModeCheckbox">
+                            <span>Efficient mode</span>
+                        </label>
+                        <div class="setting-item" id="specialModeContainer">
+                            <input type="checkbox" id="specialModeCheckbox">
+                            <span>Special mode</span>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-grid mt-3">
+                        <div class="setting-item">
+                            <span>Loop:</span>
+                            <select id="loopMode">
+                                <option value="1">Once</option>
+                                <option value="5">5 runs</option>
+                                <option value="10">10 runs</option>
+                                <option value="infinite">∞ Infinite</option>
+                            </select>
+                        </div>
+                        <div class="setting-item">
+                            <span>Wait time:</span>
+                            <select id="rewardWaitTime">
+                                <option value="11:00">11:00 (2m)</option>
+                                <option value="12:00">12:00 (3m)</option>
+                                <option value="13:00" selected>13:00 (4m)</option>
+                                <option value="randomized">Random</option>
+                            </select>
+                        </div>
+                        <div class="setting-item">
+                            <span>Max retries:</span>
+                            <input type="number" id="maxRetries" value="3" min="0" max="10" style="width: 60px;">
+                        </div>
+                        <div class="setting-item">
+                            <span>Target:</span>
+                            <select id="targetAccount">
                                 <option value="">All Accounts</option>
                             </select>
-                            <small class="text-xs text-gray-400">Select which account to send packets to (default: all accounts)</small>
-                        </div>
-                        <div>
-                            <label for="maxRetries" class="block text-sm font-medium text-text-secondary mb-1">Max Retries:</label>
-                            <select id="maxRetries" class="w-full rounded-md bg-secondary-bg border-transparent focus:border-primary-accent focus:ring focus:ring-primary-accent focus:ring-opacity-50 text-text-primary text-sm">
-                                <option value="1">1</option>
-                                <option value="3" selected>3</option>
-                                <option value="5">5</option>
-                                <option value="10">10</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label for="loopMode" class="block text-sm font-medium text-text-secondary mb-1">Loop Mode:</label>
-                            <select id="loopMode" class="w-full rounded-md bg-secondary-bg border-transparent focus:border-primary-accent focus:ring focus:ring-primary-accent focus:ring-opacity-50 text-text-primary text-sm">
-                                <option value="1">Run Once</option>
-                                <option value="2">2 Times</option>
-                                <option value="3">3 Times</option>
-                                <option value="5">5 Times</option>
-                                <option value="10">10 Times</option>
-                                <option value="25">25 Times</option>
-                                <option value="50">50 Times</option>
-                                <option value="100">100 Times</option>
-                                <option value="infinite" selected>Loop Forever</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label for="rewardWaitTime" class="block text-sm font-medium text-text-secondary mb-1">Reward Wait Time:</label>
-                            <select id="rewardWaitTime" class="w-full rounded-md bg-secondary-bg border-transparent focus:border-primary-accent focus:ring focus:ring-primary-accent focus:ring-opacity-50 text-text-primary text-sm">
-                                <option value="11:00">11:00 (2 minutes)</option>
-                                <option value="12:00">12:00 (3 minutes)</option>
-                                <option value="13:00" selected>13:00 (4 minutes)</option>
-                                <option value="randomized">Randomized</option>
-                            </select>
-                            <small class="text-xs text-gray-400">Time to wait before collecting rewards to avoid blocking</small>
                         </div>
                     </div>
-                </div>
-                </div>
-            </div>
-
-            <!-- Advanced Modes -->
-            <div class="setting-card rounded-lg p-4 mb-6">
-                <h2 class="text-lg font-semibold mb-4 flex items-center">
-                    <i class="fas fa-rocket mr-2 text-purple-400"></i>Advanced Modes
-                </h2>
-                <div class="space-y-3">
-                    <!-- Efficient Mode -->
-                    <div class="p-3 rounded-lg bg-blue-900/20 border border-blue-500/30">
-                        <label class="flex items-start space-x-2">
-                            <input type="checkbox" id="efficientModeCheckbox" class="form-checkbox h-4 w-4 text-blue-600 rounded mt-0.5">
-                            <div class="flex-1">
-                                <span class="text-sm font-semibold text-blue-300">Efficient Mode 🚀</span>
-                                <p class="text-xs text-blue-200 mt-1">Fast & smart crystal collection. Skips unwanted items.</p>
-                            </div>
-                        </label>
-                    </div>
-
-                    <!-- Efficient Mode Options (Hidden by default) -->
-                    <div id="efficientModeOptions" class="space-y-3" style="display: none;">
-                        <!-- Special Mode -->
-                        <div class="p-3 rounded-lg bg-purple-900/20 border border-purple-500/30">
-                            <label class="flex items-start space-x-2">
-                                <input type="checkbox" id="specialModeCheckbox" class="form-checkbox h-4 w-4 text-purple-600 rounded mt-0.5">
-                                <div class="flex-1">
-                                    <span class="text-sm font-semibold text-purple-300">Special Mode (8x speed)</span>
-                                    <p class="text-xs text-purple-200 mt-1">Maximum speed. Advanced users only.</p>
-                                </div>
-                            </label>
-                        </div>
-
-                        <!-- Crystal Delay -->
-                        <div>
-                            <label for="crystalDelay" class="block text-sm font-medium text-text-secondary mb-1">Crystal Delay (ms):</label>
-                            <input type="number" id="crystalDelay" value="10" min="5" max="1000" class="w-full rounded-md bg-secondary-bg border-transparent focus:border-primary-accent focus:ring focus:ring-primary-accent focus:ring-opacity-50 text-text-primary text-sm">
-                            <small class="text-xs text-gray-400">10ms (fastest) • 50ms (safe) • 100ms (stable)</small>
-                        </div>
+                    
+                    <div class="setting-item mt-3" id="crystalDelayContainer">
+                        <span>Crystal delay (ms):</span>
+                        <input type="number" id="crystalDelay" value="10" min="5" max="500" style="width: 70px;">
                     </div>
                 </div>
             </div>
 
-            <!-- Item Filter Whitelist -->
-            <div class="setting-card rounded-lg p-4 mb-6">
-                <h2 class="text-lg font-semibold mb-4 flex items-center justify-between collapse-toggle" id="filterToggle">
-                    <span class="flex items-center">
-                        <i class="fas fa-filter mr-2 text-purple-400"></i>Item Filter & Recycling
-                    </span>
-                    <i class="fas fa-chevron-down text-gray-400 transition-transform" id="filterChevron"></i>
-                </h2>
+            <!-- Item Filters -->
+            <div class="card">
+                <div class="card-header collapse-trigger" id="filterToggle">
+                    <span class="card-title"><i class="fas fa-filter"></i> Item Filters</span>
+                    <i class="fas fa-chevron-down collapse-chevron" id="filterChevron"></i>
+                </div>
                 <div class="collapsible-content" id="filterContent">
-                
-                <!-- Filter Status Indicator -->
-                <div id="filterStatus" class="mb-4 p-3 rounded-lg bg-gray-800 border border-gray-600">
-                    <div class="flex items-center text-sm">
-                        <i class="fas fa-info-circle mr-2 text-blue-400"></i>
-                        <span class="text-gray-300">
-                            <strong>Filtering Status:</strong> <span id="filterStatusText">Disabled (no item IDs specified)</span>
-                        </span>
-                    </div>
-                </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label for="clothingWhitelist" class="block text-sm font-medium text-text-secondary mb-2">
-                            <strong>Clothing IDs to Keep</strong>
-                            <span class="block text-xs text-gray-400">Comma-separated IDs. Others will be recycled.</span>
-                        </label>
-                        <textarea id="clothingWhitelist" rows="3" class="w-full rounded-md bg-secondary-bg border-transparent focus:border-primary-accent focus:ring focus:ring-primary-accent focus:ring-opacity-50 text-text-primary text-sm font-mono" placeholder="e.g., 277, 695"></textarea>
-                    </div>
-                    <div>
-                        <label for="denWhitelist" class="block text-sm font-medium text-text-secondary mb-2">
-                            <strong>Den Item IDs to Keep</strong>
-                            <span class="block text-xs text-gray-400">Comma-separated IDs. Others will be recycled.</span>
-                        </label>
-                        <textarea id="denWhitelist" rows="3" class="w-full rounded-md bg-secondary-bg border-transparent focus:border-primary-accent focus:ring focus:ring-primary-accent focus:ring-opacity-50 text-text-primary text-sm font-mono" placeholder="e.g., 720, 646"></textarea>
-                    </div>
-                </div>
-                <div class="mt-3 flex flex-wrap justify-center gap-2">
-                    <button id="saveWhitelistsButton" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-all duration-200 font-medium shadow-md">
-                        <i class="fas fa-save mr-2"></i>Save Whitelists
-                    </button>
-                    <button id="clearWhitelistsButton" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-all duration-200 font-medium shadow-md">
-                        <i class="fas fa-trash mr-2"></i>Clear Whitelists
-                    </button>
-                </div>
-                    
-                    <div class="mt-4 flex space-x-2">
-                        <button id="openClothingJson" class="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-all duration-200 font-medium shadow-md">
-                            <i class="fas fa-tshirt mr-2"></i>Find Clothing IDs
-                        </button>
-                        <button id="openDenItemsJson" class="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-all duration-200 font-medium shadow-md">
-                            <i class="fas fa-couch mr-2"></i>Find Den Item IDs
-                        </button>
+                    <div id="filterStatus" class="filter-status">
+                        <i class="fas fa-info-circle text-blue-400"></i>
+                        <span id="filterStatusText">Disabled (no item IDs specified)</span>
                     </div>
                     
-                </div>
-                </div>
-            </div>
-
-            <!-- Control Panel -->
-            <div class="bg-secondary-bg rounded-lg p-4 mb-6">
-                <div class="control-buttons-container">
-                    <button id="startButton" class="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 transition-all duration-200 font-medium shadow-md">
-                        <i class="fas fa-play mr-2"></i>Start TFD Run
-                    </button>
-                    <button id="stopButton" class="px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 transition-all duration-200 font-medium shadow-md" disabled>
-                        <i class="fas fa-stop mr-2"></i>Stop Automation
-                    </button>
-                    <button id="resetStatsButton" class="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 font-medium shadow-md">
-                        <i class="fas fa-undo mr-2"></i>Reset Stats
-                    </button>
-                </div>
-            </div>
-
-            <!-- Status and Progress -->
-            <div class="stats-card rounded-lg p-4 mb-6">
-                <h2 class="text-lg font-semibold mb-3 flex items-center">
-                    <i class="fas fa-chart-line mr-2 text-green-400"></i>Status & Progress
-                </h2>
-                <div class="space-y-3">
-                    <div>
-                        <div class="flex justify-between items-center mb-1">
-                            <span class="text-sm font-medium">Current Status:</span>
-                            <span id="statusIcon" class="text-sm">
-                                <i class="fas fa-circle text-gray-400"></i> Idle
-                            </span>
+                    <div class="filter-grid">
+                        <div class="filter-field">
+                            <label>Clothing IDs to Keep <span class="hint">(comma-separated)</span></label>
+                            <textarea id="clothingWhitelist" placeholder="e.g., 277, 695"></textarea>
                         </div>
-                        <p id="statusMessage" class="text-sm text-text-secondary bg-gray-800 rounded p-2 font-mono">Ready to start TFD automation</p>
-                    </div>
-                    <div>
-                        <div class="flex justify-between items-center mb-1">
-                            <span class="text-sm font-medium">Progress:</span>
-                            <span id="progressText" class="text-sm">0%</span>
-                        </div>
-                        <div class="w-full bg-gray-700 rounded-full h-2">
-                            <div id="progressBar" class="progress-bar bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full" style="width: 0%"></div>
+                        <div class="filter-field">
+                            <label>Den Item IDs to Keep <span class="hint">(comma-separated)</span></label>
+                            <textarea id="denWhitelist" placeholder="e.g., 720, 646"></textarea>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <!-- Statistics -->
-            <div class="stats-card rounded-lg p-4 mb-6">
-                <h2 class="text-lg font-semibold mb-3 flex items-center">
-                    <i class="fas fa-chart-bar mr-2 text-purple-400"></i>Statistics
-                </h2>
-                <div class="stats-container">
-                    <div class="text-center">
-                        <div class="text-2xl font-bold text-green-400" id="successCount">0</div>
-                        <div class="text-sm text-text-secondary">Successful</div>
-                    </div>
-                    <div class="text-center">
-                        <div class="text-2xl font-bold text-red-400" id="failureCount">0</div>
-                        <div class="text-sm text-text-secondary">Failed</div>
-                    </div>
-                    <div class="text-center">
-                        <div class="text-2xl font-bold text-blue-400" id="totalRuns">0</div>
-                        <div class="text-sm text-text-secondary">Total</div>
+                    
+                    <div class="filter-buttons">
+                        <button id="saveWhitelistsButton" class="btn btn-secondary">
+                            <i class="fas fa-save"></i> Save
+                        </button>
+                        <button id="clearWhitelistsButton" class="btn btn-secondary">
+                            <i class="fas fa-trash"></i> Clear
+                        </button>
+                        <button id="openClothingJson" class="btn btn-secondary">
+                            <i class="fas fa-tshirt"></i> Clothing IDs
+                        </button>
+                        <button id="openDenItemsJson" class="btn btn-secondary">
+                            <i class="fas fa-couch"></i> Den IDs
+                        </button>
                     </div>
                 </div>
             </div>
 
             <!-- Received Items Log -->
-            <div id="receivedItemsContainer" class="setting-card rounded-lg p-4 mt-6">
-                <div class="flex justify-between items-center mb-3">
-                    <h2 class="text-lg font-semibold flex items-center">
-                        <i class="fas fa-gift mr-2 text-yellow-400"></i>Received Items
-                    </h2>
-                    <div class="flex gap-2">
-                        <button id="toggleLogButton" class="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 text-xs font-medium" style="display: none;">
+            <div class="card" id="receivedItemsContainer">
+                <div class="card-header item-log-header">
+                    <span class="card-title"><i class="fas fa-gift"></i> Received Items</span>
+                    <div class="log-actions">
+                        <button id="toggleLogButton" class="btn btn-secondary" style="display: none;">
                             Show All
                         </button>
-                        <button id="clearLogButton" class="px-3 py-1 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-all duration-200 text-xs font-medium">
-                            <i class="fas fa-trash-alt mr-1"></i>Clear Log
+                        <button id="clearLogButton" class="btn btn-secondary">
+                            <i class="fas fa-trash-alt"></i> Clear
                         </button>
                     </div>
                 </div>
-                <div class="mb-3">
-                    <div class="relative">
-                        <input type="text" id="itemSearchBox" placeholder="Search items..." class="w-full pl-8 pr-4 py-2 rounded-md bg-secondary-bg border-transparent focus:border-primary-accent focus:ring focus:ring-primary-accent focus:ring-opacity-50 text-text-primary text-sm">
-                        <i class="fas fa-search absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm"></i>
-                    </div>
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="itemSearchBox" placeholder="Search items...">
                 </div>
-                <div id="itemLog" class="bg-gray-800/50 rounded-lg p-2 border border-gray-700 space-y-2 pr-2 collapsed">
-                    <!-- Items will be dynamically added here -->
-                    <p class="text-sm text-text-secondary text-center">No items received yet.</p>
+                <div id="itemLog" class="item-log collapsed">
+                    <p class="item-log-empty">No items received yet.</p>
                 </div>
             </div>
+
         </div>
     </div>
-    <!-- End of jam-plugin-content -->
 
     <script src="index.js"></script>
-    <!-- Import Plugin Utilities -->
     <script src="app://assets/javascript/plugin-utils.js"></script>
-    <!-- Initialize Standardized UI -->
     <script>
-        // Initialize the standardized UI components when the document is ready
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialize standard plugin UI behavior (minimize/close)
             initializePluginUI();
         });
     </script>

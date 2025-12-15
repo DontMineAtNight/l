@@ -14,6 +14,7 @@ const progressBar = document.getElementById('progressBar');
 const progressText = document.getElementById('progressText');
 const successCount = document.getElementById('successCount');
 const failureCount = document.getElementById('failureCount');
+const skippedCount = document.getElementById('skippedCount');
 const totalRuns = document.getElementById('totalRuns');
 
 // Settings Elements
@@ -67,6 +68,7 @@ let totalSteps = 0;
 let stats = {
     successful: 0,
     failed: 0,
+    skipped: 0,
     total: 0
 };
 let retryCount = 0;
@@ -456,7 +458,14 @@ const resetEfficientMode = () => {
 function loadStats() {
     const savedStats = localStorage.getItem('tfd_automation_stats');
     if (savedStats) {
-        stats = JSON.parse(savedStats);
+        const parsed = JSON.parse(savedStats);
+        // Migrate old stats that don't have skipped property
+        stats = {
+            successful: parsed.successful || 0,
+            failed: parsed.failed || 0,
+            skipped: parsed.skipped || 0,
+            total: parsed.total || 0
+        };
         updateStatsDisplay();
     }
 }
@@ -470,6 +479,7 @@ function saveStats() {
 function updateStatsDisplay() {
     if (successCount) successCount.textContent = stats.successful;
     if (failureCount) failureCount.textContent = stats.failed;
+    if (skippedCount) skippedCount.textContent = stats.skipped;
     if (totalRuns) totalRuns.textContent = stats.total;
 }
 
@@ -511,36 +521,50 @@ function playNotificationSound(type = 'success') {
 function updateStatus(message, type = 'info', step = null) {
     if (statusMessage) statusMessage.textContent = message;
     
-    // Update status icon
+    // Update status icon - support both old and new HTML structures
     if (statusIcon) {
-        let iconClass = 'fas fa-circle text-gray-400';
+        let dotClass = '';
         let iconText = 'Idle';
         
         switch (type) {
             case 'success':
-                iconClass = 'fas fa-check-circle text-green-400 pulse-animation';
+                dotClass = 'running';
                 iconText = 'Success';
                 break;
             case 'error':
-                iconClass = 'fas fa-exclamation-circle text-red-400 pulse-animation';
+                dotClass = 'error';
                 iconText = 'Error';
                 break;
             case 'warning':
-                iconClass = 'fas fa-exclamation-triangle text-yellow-400 pulse-animation';
+                dotClass = 'warning';
                 iconText = 'Warning';
                 break;
             case 'info':
                 if (isAutomationRunning) {
-                    iconClass = 'fas fa-spinner fa-spin text-blue-400';
+                    dotClass = 'running';
                     iconText = 'Running';
                 } else {
-                    iconClass = 'fas fa-circle text-gray-400';
+                    dotClass = '';
                     iconText = 'Idle';
                 }
                 break;
         }
         
-        statusIcon.innerHTML = `<i class="${iconClass}"></i> ${iconText}`;
+        // Check if using new HTML structure (has status-dot child)
+        const statusDot = statusIcon.querySelector('.status-dot');
+        if (statusDot) {
+            statusDot.className = 'status-dot ' + dotClass;
+            const textSpan = statusIcon.querySelector('span:last-child');
+            if (textSpan) textSpan.textContent = iconText;
+        } else {
+            // Fallback to old structure
+            let iconClass = 'fas fa-circle text-gray-400';
+            if (type === 'success') iconClass = 'fas fa-check-circle text-green-400 pulse-animation';
+            else if (type === 'error') iconClass = 'fas fa-exclamation-circle text-red-400 pulse-animation';
+            else if (type === 'warning') iconClass = 'fas fa-exclamation-triangle text-yellow-400 pulse-animation';
+            else if (isAutomationRunning) iconClass = 'fas fa-spinner fa-spin text-blue-400';
+            statusIcon.innerHTML = `<i class="${iconClass}"></i> ${iconText}`;
+        }
     }
     
     // Update progress if step is provided
@@ -832,14 +856,14 @@ async function runSingleAutomation() {
                     console.error('[TFD Automation] Failed to send leave quest packet:', error);
                 }
                 
-                // Success - completed efficiently without waiting
-                stats.successful++;
+                // Skipped - no valuable items, exited early without collecting
+                stats.skipped++;
                 stats.total++;
                 saveStats();
                 updateStatsDisplay();
                 
                 const loopStatus = isLooping ? ` (${currentLoopCount}/${totalLoopsToRun === Infinity ? '∞' : totalLoopsToRun})` : '';
-                updateStatus(`TFD automation completed efficiently!${loopStatus}`, 'success', totalSteps);
+                updateStatus(`TFD run skipped (no valuable items)${loopStatus}`, 'warning', totalSteps);
                 
                 // Check if we should continue looping
                 if (isLooping && (totalLoopsToRun === Infinity || currentLoopCount < totalLoopsToRun) && isAutomationRunning) {
@@ -1119,7 +1143,7 @@ function stopAutomation() {
 // Reset statistics
 function resetStats() {
     if (confirm('Are you sure you want to reset all statistics?')) {
-        stats = { successful: 0, failed: 0, total: 0 };
+        stats = { successful: 0, failed: 0, skipped: 0, total: 0 };
         saveStats();
         updateStatsDisplay();
         updateStatus('Statistics reset.', 'info');
