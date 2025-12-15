@@ -1,25 +1,11 @@
 {
-  "name": "TFD Automation",
-  "version": "2.0.0",
-  "description": "Intelligent automation for The Forgotten Desert quest with smart item filtering, efficient crystal collection, and auto-recycling. Features NoSmile's efficient mode algorithm for 8x faster completion.",
+  "name": "TFD worldinmyhand",
+  "description": "Automates The Forgotten Desert (TFD) quest creation, gem collection, reward collection, and quest exit.",
   "main": "index.html",
-  "author": "worldinmyhand",
-  "contributors": [
-    "Glockoma",
-    "NoSmile (Efficient Mode Algorithm)"
-  ],
+  "author": "Glockoma... worldinmyhand",
   "type": "ui",
   "tags": [
-    "automation",
-    "quests",
-    "productivity"
+    "beta"
   ],
-  "runInBackground": true,
-  "features": [
-    "Smart crystal collection with pattern detection",
-    "Item filtering and auto-recycling",
-    "Loop mode for continuous farming",
-    "Efficient mode (8x speed boost)",
-    "Connection monitoring and auto-retry"
-  ]
+  "runInBackground": true
 }
