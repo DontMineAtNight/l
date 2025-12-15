@@ -330,49 +330,34 @@ const efficientHandleQqm = (data) => {
                     
                     // Add to current packet gifts
                     currentPacketGifts.push(giftItem);
-                    
+
                     // Check if this exact item (by ID and slot) is already in detectedGiftItems
-                    const existingItemIndex = detectedGiftItems.findIndex(item => 
+                    const existingItemIndex = detectedGiftItems.findIndex(item =>
                         item.id === id && item.slot === i);
-                    
+
                     if (existingItemIndex === -1) {
                         // New item - add to detected gifts
                         detectedGiftItems.push(giftItem);
-                        console.log(`[TFD Automation] NEW GIFT DETECTED: ${itemName} (slot ${i})`);
-                        
+
                         // Log items based on whitelist status
                         if (isWhitelisted) {
-                            logReceivedItem(itemName, 'kept'); // Mark valuable items as kept immediately
-                            console.log(`[TFD Automation] ${itemName} is WHITELISTED - marked as kept`);
+                            logReceivedItem(itemName, 'kept');
                         } else {
                             logReceivedItem(itemName, 'skipped');
-                            console.log(`[TFD Automation] ${itemName} is NOT whitelisted - will be skipped`);
                         }
-                    } else {
-                        console.log(`[TFD Automation] EXISTING GIFT: ${itemName} (slot ${i}) - already detected`);
                     }
                 });
 
                 // Show summary for current packet AND total accumulated gifts
                 const currentPacketValuable = currentPacketGifts.filter(item => item.isWhitelisted);
                 const totalValuableItems = detectedGiftItems.filter(item => item.isWhitelisted);
-                
-                console.log(`[TFD Automation] === GIFT DETECTION COMPLETE ===`);
-                console.log(`[TFD Automation] Current packet items: ${currentPacketGifts.length}`);
-                console.log(`[TFD Automation] Current packet valuable: ${currentPacketValuable.length}`);
-                console.log(`[TFD Automation] TOTAL accumulated items: ${detectedGiftItems.length}`);
-                console.log(`[TFD Automation] TOTAL valuable items: ${totalValuableItems.length}`);
-                console.log(`[TFD Automation] All detected items: ${detectedGiftItems.map(item => `${item.name}(${item.isWhitelisted ? 'KEEP' : 'SKIP'})`).join(', ')}`);
-                
+
                 if (currentPacketValuable.length > 0) {
                     updateStatus(`🎁 New valuable items: ${currentPacketValuable.map(item => item.name).join(', ')} (Total: ${totalValuableItems.length})`, 'success');
-                    console.log(`[TFD Automation] New valuable items detected in this packet`);
                 } else if (totalValuableItems.length > 0) {
                     updateStatus(`📊 Total valuable items: ${totalValuableItems.length} (${currentPacketGifts.length} new regular items)`, 'info');
-                    console.log(`[TFD Automation] No new valuable items in this packet, but have ${totalValuableItems.length} total valuable items`);
                 } else {
                     updateStatus(`📦 No valuable items in gifts, will skip collection`, 'info');
-                    console.log(`[TFD Automation] Still no valuable items detected`);
                 }
                 break;
             }
@@ -442,35 +427,21 @@ const collectWaitPeriodCrystals = async () => {
     if (!isSpecialMode || !isAutomationRunning || waitPeriodCrystalPackets.length === 0) {
         return;
     }
-    
-    console.log(`[TFD Automation] Starting wait period crystal collection - ${waitPeriodCrystalPackets.length} packets`);
+
     updateStatus(`🔮 Collecting additional crystals during wait period (${waitPeriodCrystalPackets.length} packets)...`, 'info');
-    
+
     for (let i = 0; i < waitPeriodCrystalPackets.length; i++) {
-        if (!isAutomationRunning) {
-            console.log('[TFD Automation] Wait period crystal collection interrupted - automation stopped');
-            return;
-        }
-        
-        const packet = waitPeriodCrystalPackets[i];
-        const packetType = packet.content.includes('3water') ? '3water' : 
-                          packet.content.includes('3crystal') ? '3crystal' :
-                          packet.content.includes('4socvol') ? '4socvol' :
-                          packet.content.includes('4crystal') ? '4crystal' :
-                          packet.content.includes('qpup') ? '3pail' : 'unknown';
-        
-        console.log(`[TFD Automation] Wait period crystal ${i + 1}/${waitPeriodCrystalPackets.length} (${packetType}, delay: ${packet.delay * 1000}ms): ${packet.content}`);
-        
+        if (!isAutomationRunning) return;
+
         try {
-            await sendPacketWithRetry(packet, false, true);
+            await sendPacketWithRetry(waitPeriodCrystalPackets[i], false, true);
         } catch (error) {
-            console.error(`[TFD Automation] Error sending wait period crystal packet ${i + 1} (${packetType}):`, error);
+            console.error(`[TFD Automation] Wait period crystal error:`, error);
             updateStatus(`Warning: Wait period crystal collection error - ${error.message}`, 'warning');
             break;
         }
     }
-    
-    console.log(`[TFD Automation] Wait period crystal collection completed`);
+
     updateStatus(`✨ Wait period crystal collection completed! Continuing to gift collection...`, 'success');
 };
 
@@ -605,17 +576,9 @@ async function getPlayerSfsUserId() {
 
 // Function to get randomized delay for gem packets
 function getRandomizedDelay(baseDelay, isGemPacket = false) {
-    if (isGemPacket) {
-        // If we're in efficient mode and have a custom crystal delay, use that instead of random
-        if (isEfficientMode && baseDelay > 0) {
-            console.log(`[TFD Automation] Using efficient mode crystal delay: ${baseDelay}ms`);
-            return baseDelay;
-        }
-        // Otherwise, randomize between 500-1000ms for gem packets to avoid bot detection
-        console.log(`[TFD Automation] Using randomized delay for standard gem packets`);
-        return Math.floor(Math.random() * (1000 - 500 + 1)) + 500;
-    }
-    return baseDelay;
+    if (!isGemPacket) return baseDelay;
+    if (isEfficientMode && baseDelay > 0) return baseDelay;
+    return Math.floor(Math.random() * 501) + 500; // 500-1000ms
 }
 
 // Function to check connection status
@@ -752,7 +715,6 @@ async function runSingleAutomation() {
     // CRITICAL: Always reset gift detection for each new adventure
     detectedGiftItems = [];
     waitPeriodCrystalPackets = [];
-    console.log(`[TFD Automation] === ADVENTURE ${currentLoopCount} - RESET ALL GIFT STATE ===`);
 
     try {
         await refreshRoom();
@@ -810,22 +772,11 @@ async function runSingleAutomation() {
         updateStatus('Adventure joined. Beginning gem collection...', 'info', 4);
 
         // Step 4: Automate Gem Collection (use efficient packets if available)
-        console.log(`[TFD Automation] Gem collection phase - isEfficientMode: ${isEfficientMode}, isSpecialMode: ${isSpecialMode}`);
-        console.log(`[TFD Automation] Efficient crystal packets available: ${efficientCrystalPackets.length}`);
-        console.log(`[TFD Automation] Default TFD packets available: ${TFD_packets.packets.length}`);
-        
-        const packetsToUse = (isEfficientMode && efficientCrystalPackets.length > 0) ? 
+        const packetsToUse = (isEfficientMode && efficientCrystalPackets.length > 0) ?
             efficientCrystalPackets : TFD_packets.packets;
-        
-        console.log(`[TFD Automation] Will use ${packetsToUse.length} packets for gem collection`);
-        
+
         if (isEfficientMode && efficientCrystalPackets.length > 0) {
             updateStatus(`🚀 Using ${efficientCrystalPackets.length} optimized crystal packets!`, 'success', 4);
-            console.log(`[TFD Automation] Efficient mode active - using optimized packets`);
-        } else if (isEfficientMode) {
-            console.log(`[TFD Automation] Efficient mode active but no optimized packets - using default packets`);
-        } else {
-            console.log(`[TFD Automation] Normal mode - using default TFD packets`);
         }
         
         for (let i = 0; i < packetsToUse.length; i++) {
@@ -840,40 +791,27 @@ async function runSingleAutomation() {
         if (!isAutomationRunning) return; // Check if automation was stopped after loop
 
         updateStatus('Gem collection complete. Calculating reward timing...', 'info', totalSteps - 1);
-        console.log(`[TFD Automation] Gem collection completed successfully`);
 
         // In efficient mode, wait for gift detection to complete
         if (isEfficientMode) {
-            console.log(`[TFD Automation] Waiting for gift detection to complete...`);
             await new Promise(resolve => {
                 currentTimeout = setTimeout(resolve, 3000); // Wait 3 seconds for gift detection
             });
             if (!isAutomationRunning) return;
-            console.log(`[TFD Automation] Gift detection wait period completed`);
         }
 
         // Check if efficient mode detected no valuable items - skip reward collection entirely
-        console.log(`[TFD Automation] === REWARD COLLECTION DECISION ===`);
-        console.log(`[TFD Automation] isEfficientMode: ${isEfficientMode}`);
-        console.log(`[TFD Automation] isSpecialMode: ${isSpecialMode}`);
-        console.log(`[TFD Automation] detectedGiftItems.length: ${detectedGiftItems.length}`);
-        console.log(`[TFD Automation] detectedGiftItems: ${JSON.stringify(detectedGiftItems.map(item => ({name: item.name, whitelisted: item.isWhitelisted})))}`);
-        
         if (isEfficientMode && detectedGiftItems.length > 0) {
             const valuableItems = detectedGiftItems.filter(item => item.isWhitelisted);
-            console.log(`[TFD Automation] Valuable items found: ${valuableItems.length}`);
-            console.log(`[TFD Automation] Valuable items: ${JSON.stringify(valuableItems.map(item => item.name))}`);
-            
+
             if (valuableItems.length === 0) {
-                console.log(`[TFD Automation] === EFFICIENT EXIT: No valuable items detected ===`);
                 updateStatus('📦 No valuable items detected - leaving quest immediately', 'info');
-                
+
                 // Jump straight to quest exit
-                console.log('[TFD Automation] Refreshing room for quest exit...');
                 try {
                     await Promise.race([
                         refreshRoom(),
-                        new Promise((_, reject) => 
+                        new Promise((_, reject) =>
                             setTimeout(() => reject(new Error('Room refresh timeout')), 5000)
                         )
                     ]);
@@ -881,21 +819,17 @@ async function runSingleAutomation() {
                     console.error('[TFD Automation] Room refresh failed:', error);
                 }
                 const exitRoomId = getRoomIdToUse();
-                console.log(`[TFD Automation] Sending leave quest packet for room ${exitRoomId}...`);
                 const leaveQuestPacket = `%xt%o%qx%${exitRoomId}%`;
-                
+
                 try {
-                    // Add timeout to prevent hanging
                     await Promise.race([
                         sendPacketWithRetry(leaveQuestPacket, true),
-                        new Promise((_, reject) => 
+                        new Promise((_, reject) =>
                             setTimeout(() => reject(new Error('Quest exit timeout')), 10000)
                         )
                     ]);
-                    console.log('[TFD Automation] Leave quest packet sent successfully');
                 } catch (error) {
                     console.error('[TFD Automation] Failed to send leave quest packet:', error);
-                    // Continue anyway to avoid getting stuck
                 }
                 
                 // Success - completed efficiently without waiting
@@ -934,85 +868,63 @@ async function runSingleAutomation() {
             const totalSeconds = Math.ceil(timeUntilSafeReward / 1000);
             const minutesLeft = Math.floor(totalSeconds / 60);
             const secondsLeft = totalSeconds % 60;
-            console.log(`[TFD Automation] === WAITING FOR ${waitTimeLabel.toUpperCase()} RULE ===`);
-            console.log(`[TFD Automation] Time until safe reward: ${timeUntilSafeReward}ms (${minutesLeft}m ${secondsLeft}s)`);
             updateStatus(`Waiting ${minutesLeft}m ${secondsLeft}s for safe reward collection (${waitTimeLabel} rule)...`, 'info');
             
             // Special mode enhancement: collect additional crystals during wait if available
             if (isSpecialMode && waitPeriodCrystalPackets.length > 0) {
-                console.log(`[TFD Automation] === SPECIAL MODE ENHANCEMENT: WAIT PERIOD CRYSTAL COLLECTION ===`);
-                
-                // Calculate time needed for crystal collection (estimate 3-5 seconds buffer)
-                const crystalCollectionTime = waitPeriodCrystalPackets.length * (efficientCrystalDelay + 100) + 5000; // Add 5s buffer
+                const crystalCollectionTime = waitPeriodCrystalPackets.length * (efficientCrystalDelay + 100) + 5000;
                 const timeAfterCrystals = timeUntilSafeReward - crystalCollectionTime;
-                
+
                 if (timeAfterCrystals > 0) {
-                    console.log(`[TFD Automation] Sufficient time for crystal collection. Starting immediately...`);
                     updateStatus(`🚀 Special mode: Collecting additional crystals during wait period...`, 'info');
-                    
-                    // Collect crystals during wait period
+
                     await collectWaitPeriodCrystals();
                     if (!isAutomationRunning) return;
-                    
-                    // Request updated quest data to detect new gifts from additional crystals
-                    console.log(`[TFD Automation] === DETECTING NEW GIFTS FROM WAIT PERIOD CRYSTALS ===`);
+
                     updateStatus(`🔍 Requesting updated quest data to detect new gifts...`, 'info');
-                    
-                    // Send quest status request to trigger server to send updated qqm data
+
                     await refreshRoom();
                     const questStatusRoomId = getRoomIdToUse();
                     if (questStatusRoomId) {
-                        console.log(`[TFD Automation] Sending quest status request to get updated gift data...`);
                         try {
-                            // Request quest status update which should trigger new qqm packet with updated gifts
                             const questStatusPacket = `%xt%o%qgs%${questStatusRoomId}%`;
                             await sendPacketWithRetry(questStatusPacket, true);
-                            
-                            // Wait for server response and gift detection
+
                             await new Promise(resolve => {
-                                currentTimeout = setTimeout(resolve, 4000); // Wait 4 seconds for server response and processing
+                                currentTimeout = setTimeout(resolve, 4000);
                             });
                             if (!isAutomationRunning) return;
-                            
-                            console.log(`[TFD Automation] Quest status request completed - gift detection should be updated`);
                         } catch (error) {
-                            console.error(`[TFD Automation] Failed to request quest status for gift detection:`, error);
+                            console.error(`[TFD Automation] Quest status request failed:`, error);
                             updateStatus(`Warning: Could not refresh gift data - ${error.message}`, 'warning');
-                            
-                            // Fallback: just wait without the quest status request
+
                             await new Promise(resolve => {
                                 currentTimeout = setTimeout(resolve, 2000);
                             });
                             if (!isAutomationRunning) return;
                         }
                     } else {
-                        console.log(`[TFD Automation] No room ID available for quest status request - using fallback wait`);
                         await new Promise(resolve => {
                             currentTimeout = setTimeout(resolve, 3000);
                         });
                         if (!isAutomationRunning) return;
                     }
-                    
-                    console.log(`[TFD Automation] New gift detection completed`);
-                    
-                    // Wait remaining time after crystal collection and gift detection
+
                     const remainingWaitTime = Math.max(0, minWaitTimeMs - (Date.now() - questStartTime));
                     if (remainingWaitTime > 0) {
                         const remainingSeconds = Math.ceil(remainingWaitTime / 1000);
                         const remainingMinutes = Math.floor(remainingSeconds / 60);
                         const remainingSecondsDisplay = remainingSeconds % 60;
-                        console.log(`[TFD Automation] Crystal collection complete. Waiting additional ${remainingWaitTime}ms (${remainingMinutes}m ${remainingSecondsDisplay}s)`);
                         updateStatus(`⏱️ Waiting ${remainingMinutes}m ${remainingSecondsDisplay}s more until ${waitTimeLabel}...`, 'info');
-                        
+
                         await new Promise(resolve => {
                             currentTimeout = setTimeout(resolve, remainingWaitTime);
                         });
                         if (!isAutomationRunning) return;
                     }
                 } else {
-                    console.log(`[TFD Automation] Not enough time for crystal collection (need ${crystalCollectionTime}ms, have ${timeUntilSafeReward}ms). Using standard wait.`);
                     updateStatus(`⏱️ Limited time - using standard wait for ${minutesLeft}m ${secondsLeft}s...`, 'info');
-                    
+
                     await new Promise(resolve => {
                         currentTimeout = setTimeout(resolve, timeUntilSafeReward);
                     });
@@ -1026,19 +938,12 @@ async function runSingleAutomation() {
                 if (!isAutomationRunning) return;
             }
 
-            // **Proactive Connection Check**
-            // Send a harmless packet to ensure the connection is still alive before proceeding.
-            console.log(`[TFD Automation] Verifying connection after wait period...`);
-            updateStatus('Pinging server to verify connection...', 'info');
+            // Proactive connection check
+            updateStatus('Verifying connection...', 'info');
             await refreshRoom();
-            const pingPacket = `%xt%o%gps%${getRoomIdToUse()}%`; // gps (get player status) is a safe ping
+            const pingPacket = `%xt%o%gps%${getRoomIdToUse()}%`;
             await sendPacketWithRetry(pingPacket, true);
-            // If sendPacket fails, it will throw and be caught by the main try/catch, stopping the automation.
             updateStatus('Connection verified. Proceeding to collect rewards.', 'info');
-            console.log(`[TFD Automation] Connection verified - proceeding to reward collection`);
-
-        } else {
-            console.log(`[TFD Automation] No wait needed - proceeding directly to reward collection`);
         }
 
         updateStatus('Processing rewards...', 'info', totalSteps - 1);
@@ -1047,16 +952,11 @@ async function runSingleAutomation() {
         if (isSpecialMode && detectedGiftItems.length > 0) {
             const valuableItems = detectedGiftItems.filter(item => item.isWhitelisted);
             const regularItems = detectedGiftItems.filter(item => !item.isWhitelisted);
-            console.log(`[TFD Automation] === FINAL GIFT SUMMARY ===`);
-            console.log(`[TFD Automation] Total gifts detected: ${detectedGiftItems.length}`);
-            console.log(`[TFD Automation] Valuable gifts (will collect): ${valuableItems.length} - ${valuableItems.map(item => item.name).join(', ')}`);
-            console.log(`[TFD Automation] Regular gifts (will skip): ${regularItems.length} - ${regularItems.map(item => item.name).join(', ')}`);
-            
+
             if (valuableItems.length > 0) {
                 updateStatus(`🎁 Final summary: ${valuableItems.length} valuable + ${regularItems.length} regular gifts detected`, 'success');
             }
         } else if (isEfficientMode && detectedGiftItems.length === 0) {
-            console.warn('[TFD Automation] Warning: No gifts detected in efficient mode - this is unusual');
             updateStatus('⚠️ No gifts detected - this may indicate detection issues', 'warning');
         }
 
@@ -1066,11 +966,9 @@ async function runSingleAutomation() {
         const rewardRoomId = getRoomIdToUse();
         
         if (!rewardRoomId) {
-            console.error('[TFD Automation] No room ID available for reward collection');
             updateStatus('Error: No room ID for reward collection', 'error');
             throw new Error('No room ID available for reward collection');
         }
-
 
         // Send a request for the current den inventory to establish a baseline
         await sendPacketWithRetry(`%xt%o%di%${rewardRoomId}%`, true);
@@ -1083,51 +981,31 @@ async function runSingleAutomation() {
         // Send qpgift packets (use efficient detection if available)
         if (isEfficientMode && detectedGiftItems.length > 0) {
             const valuableItems = detectedGiftItems.filter(item => item.isWhitelisted);
-            
+
             if (valuableItems.length > 0) {
                 updateStatus(`🎁 Collecting only valuable gifts: ${valuableItems.map(item => item.name).join(', ')}`, 'success');
-                
-                // Only collect valuable gift slots
+
                 for (const item of valuableItems) {
                     if (!isAutomationRunning) return;
-                    
+
                     const qpgiftPacket = `%xt%o%qpgift%${rewardRoomId}%${item.slot}%0%0%`;
                     await sendPacketWithRetry(qpgiftPacket, true);
-                    
+
                     await new Promise(resolve => {
                         currentTimeout = setTimeout(resolve, 1000);
                     });
                 }
             } else {
-                console.log(`[TFD Automation] === EFFICIENT MODE: No valuable items detected - skipping gift collection ===`);
                 updateStatus(`📦 No valuable items detected, skipping gift collection`, 'info');
             }
-        } else if (isEfficientMode) {
-            console.log(`[TFD Automation] === EFFICIENT MODE: Standard collection - no gift detection or fallback ===`);
-            // Standard collection for all slots
-            for (let i = 0; i < 6; i++) {
-                if (!isAutomationRunning) return;
-                
-                console.log(`[TFD Automation] Collecting gift slot ${i}/5...`);
-                const qpgiftPacket = `%xt%o%qpgift%${rewardRoomId}%${i}%0%0%`;
-                await sendPacketWithRetry(qpgiftPacket, true);
-                
-                // Small delay between qpgift packets
-                await new Promise(resolve => {
-                    currentTimeout = setTimeout(resolve, 1000);
-                });
-            }
         } else {
-            console.log(`[TFD Automation] === NORMAL MODE: Standard collection ===`);
             // Standard collection for all slots
             for (let i = 0; i < 6; i++) {
                 if (!isAutomationRunning) return;
-                
-                console.log(`[TFD Automation] Collecting gift slot ${i}/5...`);
+
                 const qpgiftPacket = `%xt%o%qpgift%${rewardRoomId}%${i}%0%0%`;
                 await sendPacketWithRetry(qpgiftPacket, true);
-                
-                // Small delay between qpgift packets
+
                 await new Promise(resolve => {
                     currentTimeout = setTimeout(resolve, 1000);
                 });
@@ -1136,19 +1014,16 @@ async function runSingleAutomation() {
 
         // Send qpgiftdone packet to finalize reward collection
         if (!isAutomationRunning) return;
-        console.log(`[TFD Automation] Sending qpgiftdone packet to finalize collection...`);
         const qpgiftdonePacket = `%xt%o%qpgiftdone%${rewardRoomId}%`;
         await sendPacketWithRetry(qpgiftdonePacket, true);
-        
+
         // Random pause after done packet (500-1000ms)
-        const randomPause = Math.floor(Math.random() * 501) + 500; // 500-1000ms
-        console.log(`[TFD Automation] Waiting ${randomPause}ms after gift collection...`);
+        const randomPause = Math.floor(Math.random() * 501) + 500;
         await new Promise(resolve => {
             currentTimeout = setTimeout(resolve, randomPause);
         });
 
         updateStatus('Rewards collected. Leaving quest...', 'info', totalSteps);
-        console.log(`[TFD Automation] === QUEST EXIT PHASE ===`);
 
         // Step 6: Leave Quest
         await new Promise(resolve => {
@@ -1157,11 +1032,10 @@ async function runSingleAutomation() {
         if (!isAutomationRunning) return;
 
         // Refresh room info before leaving
-        console.log('[TFD Automation] Refreshing room for normal quest exit...');
         try {
             await Promise.race([
                 refreshRoom(),
-                new Promise((_, reject) => 
+                new Promise((_, reject) =>
                     setTimeout(() => reject(new Error('Room refresh timeout')), 5000)
                 )
             ]);
@@ -1169,21 +1043,17 @@ async function runSingleAutomation() {
             console.error('[TFD Automation] Room refresh failed:', error);
         }
         const exitRoomId = getRoomIdToUse();
-        console.log(`[TFD Automation] Sending leave quest packet for room ${exitRoomId}...`);
         const leaveQuestPacket = `%xt%o%qx%${exitRoomId}%`;
-        
+
         try {
-            // Add timeout to prevent hanging
             await Promise.race([
                 sendPacketWithRetry(leaveQuestPacket, true),
-                new Promise((_, reject) => 
+                new Promise((_, reject) =>
                     setTimeout(() => reject(new Error('Quest exit timeout')), 10000)
                 )
             ]);
-            console.log('[TFD Automation] Leave quest packet sent successfully');
         } catch (error) {
             console.error('[TFD Automation] Failed to send leave quest packet:', error);
-            // Continue anyway to avoid getting stuck
         }
         
         // Success
@@ -1430,60 +1300,48 @@ async function handleIncomingPackets(data) {
 
 // Helper function to process an item for filtering
 async function processItemForFiltering(defId, invId, itemType) {
+    if (!defId || !invId || !defId.length || !invId.length) {
+        console.warn(`[TFD Automation] Invalid DefID or InvID. DefID: ${defId}, InvID: ${invId}`);
+        return;
+    }
+
     const whitelists = getWhitelists();
     const whitelist = itemType === 'clothing' ? whitelists.clothing : whitelists.den;
+    const itemName = getItemName(defId, itemType);
 
-    if (defId && invId && defId.length > 0 && invId.length > 0) {
-        const itemName = getItemName(defId, itemType);
+    if (whitelist.has(defId)) {
+        updateStatus(`✓ Whitelisted: ${itemName}. Keeping it.`, 'info');
 
-        if (whitelist.has(defId)) {
-            updateStatus(`✓ Whitelisted: ${itemName}. Keeping it.`, 'info');
-            
-            // Check if this item was already seen in chest (logged as kept or skipped)
-            const existingItemIndex = receivedItems.findIndex(item => 
-                item.name === itemName && (item.status === 'kept' || item.status === 'skipped'));
-            
-            if (existingItemIndex !== -1) {
-                // Update existing item (refresh timestamp if already kept, or update skipped to kept)
-                const oldStatus = receivedItems[existingItemIndex].status;
-                receivedItems[existingItemIndex].status = 'kept';
-                receivedItems[existingItemIndex].timestamp = new Date().toISOString();
-                console.log(`[TFD Automation] Updated ${itemName} from ${oldStatus} to kept (actual collection)`);
-                renderItemLog();
-                localStorage.setItem('tfd_item_log', JSON.stringify(receivedItems));
-            } else {
-                // Log as new kept item (not seen in chest preview)
-                console.log(`[TFD Automation] New kept item (not detected in chest): ${itemName}`);
-                logReceivedItem(itemName, 'kept');
-            }
-            
-            playNotificationSound('success'); // Play sound when valuable item is kept
+        const existingItemIndex = receivedItems.findIndex(item =>
+            item.name === itemName && (item.status === 'kept' || item.status === 'skipped'));
+
+        if (existingItemIndex !== -1) {
+            receivedItems[existingItemIndex].status = 'kept';
+            receivedItems[existingItemIndex].timestamp = new Date().toISOString();
+            renderItemLog();
+            localStorage.setItem('tfd_item_log', JSON.stringify(receivedItems));
         } else {
-            updateStatus(`♻ Recycling: ${itemName}.`, 'warning');
-            logReceivedItem(itemName, 'recycled');
-            
-            await new Promise(resolve => setTimeout(resolve, 150)); // Small delay
-            
-            await refreshRoom();
-            
-            let recyclePacket;
-            if (itemType === 'den') {
-                // Use the den-specific recycling packet with the correct format
-                recyclePacket = `%xt%o%dr%${getRoomIdToUse()}%0%${invId}%`;
-            } else {
-                // Default to the standard item recycling packet for clothing
-                recyclePacket = `%xt%o%ir%${getRoomIdToUse()}%${invId}%`;
-            }
-            
-            try {
-                await sendPacketWithRetry(recyclePacket, true);
-            } catch (error) {
-                console.error(`[TFD Automation] FAILED: Could not send recycle request for InvID ${invId}:`, error);
-                updateStatus(`Error recycling ${itemName}: ${error.message}`, 'error');
-            }
+            logReceivedItem(itemName, 'kept');
         }
+
+        playNotificationSound('success');
     } else {
-        console.warn(`[TFD Automation] WARNING: Could not process item. Invalid DefID or InvID. DefID: ${defId}, InvID: ${invId}`);
+        updateStatus(`♻ Recycling: ${itemName}.`, 'warning');
+        logReceivedItem(itemName, 'recycled');
+
+        await new Promise(resolve => setTimeout(resolve, 150));
+        await refreshRoom();
+
+        const recyclePacket = itemType === 'den' ?
+            `%xt%o%dr%${getRoomIdToUse()}%0%${invId}%` :
+            `%xt%o%ir%${getRoomIdToUse()}%${invId}%`;
+
+        try {
+            await sendPacketWithRetry(recyclePacket, true);
+        } catch (error) {
+            console.error(`[TFD Automation] Recycle failed for InvID ${invId}:`, error);
+            updateStatus(`Error recycling ${itemName}: ${error.message}`, 'error');
+        }
     }
 }
 
@@ -1491,29 +1349,16 @@ async function processItemForFiltering(defId, invId, itemType) {
 function logReceivedItem(itemName, status) {
     // Check if the checkbox exists and is checked before skipping recycled and skipped items
     if (dontLogRecycledCheckbox && dontLogRecycledCheckbox.checked && (status === 'recycled' || status === 'skipped')) {
-        return; // Do not log recycled or skipped items if the setting is checked
-    }
-    
-    // Add debug logging to help troubleshoot
-    console.log(`[TFD Automation] Logging item: ${itemName} (${status})`);
-    
-    receivedItems.push({ name: itemName, status, timestamp: new Date().toISOString() });
-    renderItemLog();
-    localStorage.setItem('tfd_item_log', JSON.stringify(receivedItems));
-    
-    // Force update the UI
-    if (itemLog) {
-        console.log(`[TFD Automation] Total received items: ${receivedItems.length}`);
-    }
-}
-
-function renderItemLog() {
-    if (!itemLog) {
-        console.warn('[TFD Automation] itemLog element not found');
         return;
     }
 
-    console.log(`[TFD Automation] Rendering item log with ${receivedItems.length} items`);
+    receivedItems.push({ name: itemName, status, timestamp: new Date().toISOString() });
+    renderItemLog();
+    localStorage.setItem('tfd_item_log', JSON.stringify(receivedItems));
+}
+
+function renderItemLog() {
+    if (!itemLog) return;
 
     const isCollapsed = itemLog.classList.contains('collapsed');
     const searchTerm = itemSearchBox ? itemSearchBox.value.toLowerCase() : '';
@@ -1570,7 +1415,6 @@ function renderItemLog() {
     }
 
     itemLog.scrollTop = itemLog.scrollHeight;
-    console.log(`[TFD Automation] Rendered ${itemsToRender.length} items in log`);
 }
 
 // Function to clear the received items log
