@@ -71,31 +71,25 @@
         /* Custom Button Colors */
         #startButton {
             background: linear-gradient(to right, #10b981, #059669) !important;
-            padding: 8px 16px !important;
-            height: auto !important;
         }
         #startButton:hover {
             background: linear-gradient(to right, #059669, #047857) !important;
         }
-        
+
         #stopButton {
             background: linear-gradient(to right, #ef4444, #dc2626) !important;
-            padding: 8px 16px !important;
-            height: auto !important;
         }
         #stopButton:hover {
             background: linear-gradient(to right, #dc2626, #b91c1c) !important;
         }
-        
+
         #resetStatsButton {
             background: linear-gradient(to right, #3b82f6, #2563eb) !important;
-            padding: 8px 16px !important;
-            height: auto !important;
         }
         #resetStatsButton:hover {
             background: linear-gradient(to right, #2563eb, #1d4ed8) !important;
         }
-        
+
         /* Whitelist Button Colors */
         #saveWhitelistsButton, #clearWhitelistsButton, #openClothingJson, #openDenItemsJson {
             background: #4b5563 !important;
@@ -104,27 +98,26 @@
             background: #374151 !important;
         }
         
-        /* Force Statistics Spacing */
-        .stats-container {
+        /* Statistics and Control Button Layout */
+        .stats-container, .control-buttons-container {
             display: flex !important;
             justify-content: center !important;
             align-items: center !important;
+        }
+
+        .stats-container {
             gap: 80px !important;
         }
-        
+
         .stats-container > div {
             text-align: center !important;
         }
-        
-        /* Force Control Button Spacing */
+
         .control-buttons-container {
-            display: flex !important;
             flex-direction: row !important;
-            justify-content: center !important;
-            align-items: center !important;
             gap: 60px !important;
         }
-        
+
         .control-buttons-container > button {
             padding: 8px 16px !important;
             border-radius: 8px !important;
